@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+
+  <head>
+    <title>Geo Smart Sim</title>
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+    <link rel="stylesheet" href="../css/geosmartsim.css" />
+  </head>
+  
+  <body>
+      <div id="control_panel" class="styled"></div>
+      
+      <div id="map"></div>
+      <button onclick="start_test()">Run agents</button>
+      
+      <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+      <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+      <script src="../js/geosmartsim.js"></script>
+      
+      <script>
+           
+      function start_test(){
+	var name = 'home_to_work';
+	runAllAgents(name);
+      }
+      </script>
+      
+  </body>
+</html>

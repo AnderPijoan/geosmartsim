@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+
+  <head>
+    <title>Geo Smart Sim</title>
+    <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
+    <link rel="stylesheet" href="static/css/geosmartsim.css" />
+  </head>
+  
+  <body>
+      <div id="control_panel"></div>
+      
+      <div id="map"></div>
+      <button onclick="start_test()">Create agents</button>
+      <button onclick="stop_test()">Stop creating agents</button>
+      
+      <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
+      <script src="http://ajax.googleapis.com/ajax/libs/jquery/1/jquery.min.js"></script>
+      <script src="static/js/geosmartsim.js"></script>
+      
+      <script>
+      
+      var timer;
+      
+      function start_test(){
+	  timer = setInterval( function(){
+      
+      $.post( 'http://localhost:3000/' + name, function( res ) {
+	  var json = JSON.parse(res);
+	  var agent = json.data;
+	  $.post( 'http://localhost:3000/' + name + '/' + agent.id + '/' + 'run');
+      });
+      }
+      , 100);
+      
+      var name = 'routing_agents';
+      var agentsList;
+      }
+      
+      function stop_test(){
+	  clearInterval(timer);
+      }
+      
+      </script>
+      
+  </body>
+</html>

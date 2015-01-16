@@ -1,0 +1,34 @@
+html, body{
+  height: 100%;
+  width: 100%;
+  margin: 0;
+}
+
+div#map {
+  height: 100%;
+  width: 100%;
+}
+
+.styled{
+  z-index: 1001;
+  padding: 0 15px;
+  background-position: 50% 50%;
+  background-color: rgba(255,255,255,0.9);
+  background-repeat: no-repeat;
+  display: block;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.65);
+  border-radius: 4px;
+}
+
+div#control_panel{
+  position: absolute;
+  float: left;
+  bottom: 0;
+  width: 36px;
+  height:36px;
+}
+
+div#control_panel:hover{
+  height:80%;
+  width: 80%;
+}
