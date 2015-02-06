@@ -11,12 +11,9 @@ Agent::Agent()
 {
     this->born_datetime = QDateTime::currentDateTime();
     this->geometry = 0;
-    // Important to to ++ before, otherwise if two agents are being created together
-    // all inheritance will receive the same id for both of them
     this->id = ++Agent::counter;
     this->name = this->getClass() + "-" + QString::number(this->getId());
-     // Specific display variables
-    this->ui_map_follow = false;
+    this->style = new UiStyle();
 }
 
 Agent::~Agent() {
@@ -24,6 +21,7 @@ Agent::~Agent() {
     if (this->geometry){
         delete this->geometry;
     }
+    this->style->deleteLater();
 }
 
 void Agent::stop() {
@@ -44,7 +42,7 @@ QJsonObject Agent::toJSON(){
     agent.insert("class", this->getClass()); // CLASS
     agent.insert("name", this->getName());
     // Specific display variables
-    if(this->ui_map_follow) { agent.insert("map_follow", this->ui_map_follow); }
+    if(this->style->map_follow) { agent.insert("map_follow", this->style->map_follow); }
     if ( this->getGeometry() ) {
         agent.insert("x", this->getGeometry()->getCentroid()->getX());
         agent.insert("y", this->getGeometry()->getCentroid()->getY());
@@ -59,11 +57,10 @@ QJsonObject Agent::customGeoJSONProperties(){
     properties.insert( "class", this->getClass());
     properties.insert("name", this->getName());
    // Specific display variables
-    if(!this->ui_color.isEmpty()) { properties.insert("color" , this->ui_color); }
-    if(!this->ui_border_color.isEmpty()) { properties.insert("border_color" , this->ui_border_color); }
-    if(!this->ui_border_weight.isEmpty()) { properties.insert("weight" , this->ui_border_weight); }
-    if(!this->ui_opacity.isEmpty()) { properties.insert("fill_opacity" , this->ui_opacity); }
-    if(!this->ui_border_opacity.isEmpty()) { properties.insert("border_opacity" , this->ui_border_opacity); }
+    QJsonObject style_json = this->style->asJSON();
+    foreach(QString key , style_json.keys()){
+          properties.insert(key , style_json.value(key) );
+    }
     return properties;
 }
 
@@ -80,7 +77,7 @@ QJsonArray Agent::manyToJSON(QList<Agent*> agents){
  MESSAGES
 **********************************************************************/
 
-void Agent::emitMessageSignal(Message *message)
+/*void Agent::emitMessageSignal(Message *message)
 {
     emit sendMessageToEnvironment(message);
 }
@@ -91,13 +88,13 @@ Message* Agent::createMessage(QString content)
     message->setContent(content);
     message->setSender(this->metaObject()->className() + ',' + QString::number(id));
     return message;
-}
+}*/
 
 /**********************************************************************
  SETTERS
 **********************************************************************/
 
-void Agent::setFromFrontend(QMap<QVariant, QVariant> parameters){
+void Agent::setFromUI(QMap<QVariant, QVariant> parameters){
     if ( dynamic_cast<Point*>( this->getGeometry() ) ){
         if ( parameters.contains("x") ){
             Point* point = dynamic_cast<Point*>( this->getGeometry() );
@@ -120,15 +117,30 @@ void Agent::setName(QString name){
 
 void Agent::setGeometry(Geometry* geom){
     QMutexLocker locker(&mutex);
-    if( this->geometry ){
-        delete this->geometry;
+    if( this->geometry != geom){
+        if( this->geometry ){
+            delete this->geometry;
+        }
+        this->geometry = geom;
     }
-    this->geometry = geom;
-
 }
 
 void Agent::setBornDatetime(QDateTime born_datetime){
     this->born_datetime = born_datetime;
+}
+
+void Agent::memorizeAgent(Agent *agent){
+    if ( !this->memory.keys().contains(agent->getClass()) ){
+        QHash<unsigned int, Agent*> map;
+        this->memory.insert(agent->getClass(), map);
+    }
+    this->memory[agent->getClass()].insert(agent->getId() , agent);
+}
+
+void Agent::forgetAgent(Agent *agent){
+    if ( this->memory.keys().contains(agent->getClass()) ){
+        this->memory[agent->getClass()].remove(agent->getId());
+    }
 }
 
 /**********************************************************************
@@ -156,10 +168,24 @@ QDateTime Agent::getBornDatetime(){
     return this->born_datetime;
 }
 
+Agent* Agent::getAgentFromMemory(QString class_name, unsigned int id){
+    if ( this->memory.keys().contains(class_name) ){
+        return this->memory[class_name].value(id);
+    }
+}
+
+QList<Agent*> Agent::getAgentsFromMemory(QString class_name){
+    QList<Agent*> agents;
+    foreach(Agent* agent , this->memory[class_name].values()){
+        agents.append(agent);
+    }
+    return agents;
+}
+
 /**********************************************************************
  SLOTS
 **********************************************************************/
 
-void Agent::receiveNotificationFromEnvironment(Message *message){
+/*void Agent::receiveNotificationFromEnvironment(Message *message){
     qDebug() << "Received message from Sender: " << message->getSender() << ": " <<  message->getContent();
-}
+}*/

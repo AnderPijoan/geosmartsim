@@ -14,8 +14,7 @@
 
 #include "environment/communication_environment/Message.h"
 #include "utils/json/JSONSerializer.h"
-
-QT_FORWARD_DECLARE_CLASS(Message)
+#include "utils/uistyle/UiStyle.h"
 
 using namespace geos::geom;
 
@@ -29,14 +28,16 @@ public:
     virtual QJsonObject customGeoJSONProperties(); // Can overwrite if want to add extra variables to geojson properties
 
     // Messages
-    Message* createMessage(QString content);
-    void emitMessageSignal(Message *message);
+    //Message* createMessage(QString content);
+    //void emitMessageSignal(Message *message);
 
     // Setters
-    virtual void setFromFrontend(QMap<QVariant, QVariant> parameters); // Update agent according to parameters sent from frontend
+    virtual void setFromUI(QMap<QVariant, QVariant> parameters); // Update agent according to parameters sent from frontend
     void setName(QString name);
     void setGeometry(Geometry* geom);
     void setBornDatetime(QDateTime born_datetime);
+    void memorizeAgent(Agent* agent);
+    void forgetAgent(Agent* agent);
 
     // Getters
     unsigned int getId();
@@ -46,21 +47,18 @@ public:
     QDateTime getBornDatetime();
     QString toString();
     static QJsonArray manyToJSON(QList<Agent*> agents);
+    Agent* getAgentFromMemory(QString class_name, unsigned int id);
+    QList<Agent*> getAgentsFromMemory(QString class_name);
 
     // Specific display variables
-    bool ui_map_follow;
-    QString ui_color;
-    QString ui_border_color;
-    QString ui_border_weight;
-    QString ui_opacity;
-    QString ui_border_opacity;
+    UiStyle* style;
 
 signals:
-    void broadcastSocketMessage(QByteArray message);
-    void sendMessageToEnvironment(Message *message);
+    void updateUI(QByteArray message);
+    //void sendMessageToEnvironment(Message *message);
 
-public slots:
-    void receiveNotificationFromEnvironment(Message *message);
+//public slots:
+    //void receiveNotificationFromEnvironment(Message *message);
 
 protected:
     // Abstract agent, cant be created
@@ -70,11 +68,12 @@ private:
     virtual void run(){} // Only environment can call RUN, empty for passive entities
     static unsigned int counter; // Autoincremental for ids
 
-    // ALL AGENTS (Agents and passive entities) common variables
+    // ALL AGENTS COMMON VARIABLES
     unsigned int id; // Agent id
     QString name; // Agent name
     Geometry *geometry; // Entity geometry
     QDateTime born_datetime; // Entity creation/borning datetime
+    QHash<QString, QHash<unsigned int, Agent*> > memory; // QHASH<ClassName, QHASH< ID , AGENT>>
 
     // Mutex
     QMutex mutex;

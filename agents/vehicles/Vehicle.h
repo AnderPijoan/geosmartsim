@@ -22,8 +22,6 @@ public:
     Point* getEndingPoint();
     double getMaxSpeed();
 
-    // ENTITY METHODS
-
 protected:
 
     // ENTITY SKILLS

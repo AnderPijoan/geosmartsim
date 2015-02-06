@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QMutex>
 #include <QThreadPool>
+#include <QNetworkAccessManager>
 
 #include "agents/Agent.h"
 
@@ -27,10 +28,6 @@ class Environment : public PhysicalEnvironment, public CommunicationEnvironment
 {
 public:
     static Environment *getInstance();
-
-    // GETTERS
-    HttpServer* getHttpServer();
-    WebSocketServer* getWebSocketServer();
 
     // SETTERS
     void setMaxParallelAgents(unsigned int number);

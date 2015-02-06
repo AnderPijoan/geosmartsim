@@ -99,11 +99,11 @@ bool Environment::addAgents(QList<Agent*> agents){
 bool Environment::addAgent(Agent *agent){
     QMutexLocker locker(&mutex);
     // If it is the first agent of this class we receive, create the class in the hashmap
-    if(!agents.contains(agent->getClass())){
+    if(!agents.keys().contains(agent->getClass())){
         // Create HTTP URLS for these agent type
         QStringList httpOperations;
         httpOperations << "GETALL" << "GETONE" << "RUNALL" << "RUNONE" << "STOP";
-        this->getHttpServer()->createUrls(agent->getClass().toLower(), httpOperations);
+        this->http_server->createUrls(agent->getClass().toLower(), httpOperations);
         // Insert agent in hashmap
         QHash<unsigned int, Agent*> map;
         agents.insert(agent->getClass(), map);
@@ -112,9 +112,7 @@ bool Environment::addAgent(Agent *agent){
     // Add to agent map
     agents[agent->getClass()].insert(agent->getId(), agent);
     // Connect with websocket
-    CommunicationEnvironment::connect( agent , SIGNAL( broadcastSocketMessage(QByteArray) ) ,
-                   this->getWebSocketServer() , SLOT( broadcastSocketMessage(QByteArray))
-                   );
+    CommunicationEnvironment::connect( agent , SIGNAL( updateUI(QByteArray) ) , this->websocket_server , SLOT( updateUI(QByteArray)));
 
     // Configure signal to enable communication between agents and environment
     //QObject::connect(agent, SIGNAL(sendMessageToEnvironment(Message*)), this, SLOT(receiveMessageFromAgent(Message*)));
@@ -172,16 +170,4 @@ QList<Agent*> Environment::getAgents(){
         }
     }
     return agents_list;
-}
-
-/**********************************************************************
- GETTERS
-**********************************************************************/
-
-HttpServer* Environment::getHttpServer(){
-    return this->http_server;
-}
-
-WebSocketServer* Environment::getWebSocketServer(){
-    return this->websocket_server;
 }

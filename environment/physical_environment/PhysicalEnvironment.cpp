@@ -29,7 +29,7 @@ GeometryFactory* PhysicalEnvironment::getGeometryFactory(){
 }
 
 Geometry* PhysicalEnvironment::getGeometryFromWKT(QString wkt){
-     QMutexLocker locker(&mutex);
+    QMutexLocker locker(&mutex);
     geos::io::WKTReader reader = geos::io::WKTReader(this->geometry_factory);
     return reader.read(wkt.toStdString());
 }
