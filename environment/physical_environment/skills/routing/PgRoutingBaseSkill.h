@@ -12,8 +12,6 @@
 
 #include "environment/skills/db/AccessDBSkill.h"
 #include "environment/physical_environment/skills/routing/PgRoutingConstants.h"
-#include "environment/physical_environment/managers/graphs/GraphNetworksManager.h"
-#include "agents/graphs/GraphRoute.h"
 #include "agents/graphs/roads/Road.h"
 
 using namespace geos::geom;

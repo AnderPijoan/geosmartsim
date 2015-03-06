@@ -71,7 +71,7 @@ function getStyle(feature) {
     weight: feature.properties.weight || 6,
     opacity: feature.properties.border_opacity || 0.8,
     color: feature.properties.border_color || 'black',
-    fillOpacity: feature.properties.fill_opacity || 0.5,
+    fillOpacity: feature.properties.fill_opacity || 0.6,
     dashArray: feature.properties.dash_array || 1
   };
 }

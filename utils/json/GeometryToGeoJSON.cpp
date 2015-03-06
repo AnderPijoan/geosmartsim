@@ -14,7 +14,7 @@ QJsonObject GeometryToGeoJSON::toJSON(Geometry *geom, QJsonObject properties){
 
         // Geometry
         QJsonObject geometry;
-        if(geom->getGeometryType().compare(std::string("Point")) == 0){
+        if(geom->getGeometryType().compare("Point") == 0){
             Point* point = dynamic_cast<Point*>(geom);
             geometry.insert("type", "Point");
 

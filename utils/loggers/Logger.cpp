@@ -5,6 +5,7 @@
 #include "Logger.h"
 
 QString Logger::common_path = "./../logs/";
+//QString Logger::common_path = "logs/";
 QString Logger::default_filename = "log";
 
 void Logger::log(QVariant info, QString filename){

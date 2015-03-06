@@ -1,6 +1,6 @@
 #include "Person.h"
 
-Person::Person(QDateTime born_date, PersonConstants::gender gender) : Agent(){
+Person::Person(PersonConstants::gender gender, QDateTime born_date) : Agent(){
     this->gender = gender;
     this->setBornDatetime(born_date);
 }

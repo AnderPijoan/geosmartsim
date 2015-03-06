@@ -6,7 +6,7 @@
 #include <qhttprequest.h>
 #include <qhttpresponse.h>
 
-#include "utils/httpserver/UrlMatch.h"
+#include "utils/http_server/UrlMatch.h"
 
 QT_FORWARD_DECLARE_CLASS(UrlMatch)
 

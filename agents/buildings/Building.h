@@ -11,7 +11,7 @@ class Building : public Agent
 {
     Q_OBJECT
 public:
-    Building(int levels);
+    Building(int levels,  QString class_name = "Building");
     ~Building();
      virtual QJsonObject customGeoJSONProperties(); // Overwrite to add extra variables to geojson properties
 

@@ -8,7 +8,7 @@ class Person : public Agent
 {
     Q_OBJECT
 public:
-    Person(QDateTime born_date, PersonConstants::gender gender);
+    Person(PersonConstants::gender gender, QDateTime born_date = QDateTime::currentDateTime());
     ~Person();
 
     // GETTERS

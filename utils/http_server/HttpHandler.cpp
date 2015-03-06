@@ -3,7 +3,7 @@
 
 #include "agents/Agent.h"
 #include "environment/Environment.h"
-#include "utils/httpserver/HttpHandler.h"
+#include "utils/http_server/HttpHandler.h"
 #include "utils/json/JSONSerializer.h"
 
 QT_FORWARD_DECLARE_CLASS(Entity)
@@ -116,7 +116,7 @@ void HttpHandler::HTTP_envTime(QHttpRequest *req, QHttpResponse *res, QRegularEx
     Q_UNUSED(body);
     res->writeHead(200);
     res->setProperty("Content-Type", "application/json");
-    res->end(Time::toJSON());
+    res->end(QJsonDocument::fromVariant( Time::getCurrentDateTimeAsJSON() ).toJson() );
 }
 
 void HttpHandler::HTTP_GetAll(QHttpRequest *req, QHttpResponse *res, QRegularExpressionMatch match, QMap<QVariant, QVariant> body){
@@ -169,10 +169,10 @@ void HttpHandler::HTTP_Update(QHttpRequest *req, QHttpResponse *res, QRegularExp
     Q_UNUSED(body);
     Agent* entity = Environment::getInstance()->getAgent(match.captured("class_name"), match.captured("id").toInt());
     if(entity){
-        entity->setFromFrontend( body );
+        entity->setFromUI( body );
         res->writeHead(200);
         res->setProperty("Content-Type", "application/json");
-        entity->broadcastSocketMessage(JSONSerializer::createJSONMessage( entity->toJSON() , JSONSerializer::UPDATE) );
+        entity->updateUI(JSONSerializer::createJSONMessage( entity->toJSON() , JSONSerializer::UPDATE) );
         res->end( JSONSerializer::createJSONMessage(entity->toJSON() , JSONSerializer::UPDATE ) );
     } else {
         res->writeHead(404);
@@ -184,7 +184,7 @@ void HttpHandler::HTTP_Update(QHttpRequest *req, QHttpResponse *res, QRegularExp
 void HttpHandler::HTTP_RunAll(QHttpRequest *req, QHttpResponse *res, QRegularExpressionMatch match, QMap<QVariant, QVariant> body){
     Q_UNUSED(req);
     Q_UNUSED(body);
-    if(Environment::getInstance()->runAllAgents(match.captured("class_name"))){
+    if(Environment::getInstance()->runAgents(match.captured("class_name"))){
         res->writeHead(200);
         res->setProperty("Content-Type", "application/json");
         res->end();

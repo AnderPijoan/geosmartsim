@@ -10,7 +10,7 @@ public:
     PgRoutingAtoBSkill( Agent* agent , QVector<PgRoutingConstants::road_types> roads_to_use , double reverse_factor = 1);
     virtual ~PgRoutingAtoBSkill();
 
-    GraphRoute* getAtoBRoute(Point* starting_point , Point* ending_point, const GeometryFactory* factory);
+    //GraphRoute* getAtoBRoute(Point* starting_point , Point* ending_point, const GeometryFactory* factory);
 };
 
 #endif // PGROUTINGATOBSKILL_H

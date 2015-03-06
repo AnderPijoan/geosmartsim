@@ -11,8 +11,7 @@
 PhysicalEnvironment::PhysicalEnvironment(QObject *parent) : QObject(parent)
 {
     // Create geometry factory
-    this->geometry_factory = new GeometryFactory(new PrecisionModel(99999999999999999.0, 0, 0), 4326);
-
+    this->geometry_factory = new GeometryFactory(new PrecisionModel( PrecisionModel::FLOATING ), 4326);
 }
 
 PhysicalEnvironment::~PhysicalEnvironment(){
@@ -38,7 +37,7 @@ QString PhysicalEnvironment::getWKTFromGeometry(Geometry* geometry){
     if ( geometry ){
         return QString::fromStdString( geometry->toString() );
     }
-        return QString("POLYGON EMPTY");
+    return QString("POLYGON EMPTY");
 }
 
 Geometry* PhysicalEnvironment::getBounds(){
@@ -46,7 +45,7 @@ Geometry* PhysicalEnvironment::getBounds(){
 }
 
 Point* PhysicalEnvironment::getRandomPoint(int seed){
-     QMutexLocker locker(&mutex);
+    QMutexLocker locker(&mutex);
     srand( seed );
     Point* point = 0;
     geos::io::WKTReader* reader = new geos::io::WKTReader();
@@ -56,25 +55,37 @@ Point* PhysicalEnvironment::getRandomPoint(int seed){
     double bottom = this->bounds->getEnvelopeInternal()->getMinY();
     do{
         if (point) { delete point; }
-        double x = left + ((static_cast<double>(rand() % 1000)) / 1000 * ( right - left ));
-        double y = bottom + ((static_cast<double>(rand() % 1000)) / 1000 * ( top - bottom ));
+        double x = left + ((static_cast<double>( qrand() % 1000)) / 1000 * ( right - left ));
+        double y = bottom + ((static_cast<double>(qrand() % 1000)) / 1000 * ( top - bottom ));
         point = dynamic_cast<Point*> (reader->read( QString("POINT(%1 %2)")
-                     .arg( x )
-                     .arg( y )
-                     .toStdString()
-                    ) );
+                                                    .arg( x )
+                                                    .arg( y )
+                                                    .toStdString()
+                                                    ) );
     }  while( !this->bounds->contains( point ) );
     delete reader;
     return point;
 }
 
+QList<Agent*> PhysicalEnvironment::getAgentsByGeometry(Geometry* geometry, QString class_name){
+    QMutexLocker locker(&mutex);
+    QList<Agent*> agents;
+    if( this->spatial_index.contains(class_name) ){
+        std::vector<void*> vector;
+        this->spatial_index[class_name]->query( geometry->getEnvelopeInternal() , vector);
+        for(unsigned int i = 0 ; i < vector.size() ; i++){
+            Agent* agent = ((Agent*) vector.at(i));
+            if( geometry->intersects( agent->getGeometry() ) ){
+                agents.append( agent );
+            }
+        }
+    }
+    return agents;
+}
+
 /**********************************************************************
  SETTERS
 **********************************************************************/
-
-void PhysicalEnvironment::setBounds(QString wkt){
-    this->bounds = this->getGeometryFromWKT(wkt);
-}
 
 void PhysicalEnvironment::setBounds(Geometry *geometry){
     this->bounds = geometry;

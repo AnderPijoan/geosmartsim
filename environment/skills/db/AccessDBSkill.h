@@ -2,7 +2,7 @@
 #define ACCESSDBSKILL_H
 
 #include "environment/skills/Skill.h"
-#include "utils/drivers/PostgresDriver.h"
+#include "utils/db/PostgresDriver.h"
 
 /**
  * @brief The AccessDBSkill class

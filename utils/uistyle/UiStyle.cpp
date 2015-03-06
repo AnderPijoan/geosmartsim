@@ -5,6 +5,7 @@ UiStyle::UiStyle(QObject *parent) : QObject(parent){
     this->border_weight = -1;
     this->fill_opacity = -1;
     this->border_opacity = -1;
+    this->icon_url = "http://cdn.flaticon.com/png/32/33622.png";
 }
 
 UiStyle::~UiStyle(){

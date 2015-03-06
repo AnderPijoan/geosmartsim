@@ -1,20 +1,11 @@
 #include "GraphEdge.h"
-#include <QDebug>
+#include <QtMath>
 
-GraphEdge::GraphEdge(GraphEdge &edge) : Agent(){
-    this->point_iterator_position = -1;  // STARTS IN -1
-    try{
-        this->setGeometry( edge.getGeometry()->clone() );
-    } catch(...){}
-    this->edge_length = this->getGeometry()->getLength();
-    this->edge_max_speed = 1; //~ 4km/h
-}
-
-GraphEdge::GraphEdge(LineString* geometry) : Agent(){
-    this->point_iterator_position = -1;  // STARTS IN -1
-    this->setGeometry( geometry );
-    this->edge_length = geometry->getLength();
-    this->edge_max_speed = 1; //~ 4km/h
+GraphEdge::GraphEdge(GraphNode* start_node, GraphNode* end_node, QString class_name) : Agent(class_name){
+    this->weight = 1;
+    this->start_node = start_node;
+    this->end_node = end_node;
+    this->max_speed = 1; //~ 4km/h
 }
 
 GraphEdge::~GraphEdge(){
@@ -24,63 +15,41 @@ GraphEdge::~GraphEdge(){
  GETTERS
 **********************************************************************/
 
-double GraphEdge::getLength(){
-    return this->edge_length;
+double GraphEdge::getWeight(){
+    return this->weight;
 }
 
+
 double GraphEdge::getMaxSpeed(){
-    return this->edge_max_speed;
+    return this->max_speed;
+}
+
+GraphNode* GraphEdge::getStartNode(){
+    return this->start_node;
+}
+
+GraphNode* GraphEdge::getEndNode(){
+    return this->end_node;
+}
+
+double GraphEdge::getsecondsToGoThrough(double speed){
+    return this->getGeometry()->getLength() * 10000 / qMin(this->max_speed, speed);
 }
 
 /**********************************************************************
  SETTERS
 **********************************************************************/
 
-void GraphEdge::setLength(double length){
-    this->edge_length = length;
+void GraphEdge::setGeometry(Geometry *geom){
+    // An edge's geometry must be a LineString
+    LineString* line = dynamic_cast<LineString*>(geom);
+    Agent::setGeometry(line);
 }
 
-void GraphEdge::setMaxSpeed(double speed){
-    this->edge_max_speed = speed;
+void GraphEdge::setWeight(double weight){
+    this->weight = weight;
 }
 
-/**********************************************************************
- ENTITY METHODS
-**********************************************************************/
-
-Point* GraphEdge::nextPoint(){
-    if( this->point_iterator_position < this->getGeometry()->getNumPoints()-1 ){
-        this->point_iterator_position++;
-        return dynamic_cast<LineString*> (this->getGeometry())->getPointN(this->point_iterator_position);
-    }
-    return 0;
-}
-
-Point* GraphEdge::previousPoint(){
-    if( this->point_iterator_position > 0 ){
-        this->point_iterator_position--;
-        return dynamic_cast<LineString*> (this->getGeometry())->getPointN(this->point_iterator_position);
-    }
-    return 0;
-}
-
-void GraphEdge::goToBeginning(){
-    this->point_iterator_position = -1; // MUST START IN -1
-}
-
-double GraphEdge::secondsToGoThrough(double element_max_speed){
-    double speed = qMin( this->edge_max_speed ,element_max_speed );
-    return this->edge_length / speed;
-}
-
-Point* GraphEdge::currentPoint(){
-    dynamic_cast<LineString*> (this->getGeometry())->getPointN(this->point_iterator_position);
-}
-
-QVector<Point*> GraphEdge::getPoints(){
-    QVector<Point*> points;
-    for(int i = 0 ; i < this->getGeometry()->getNumPoints() ; i++ ){
-        points.append( dynamic_cast<LineString*> (this->getGeometry())->getPointN( i ) );
-    }
-    return points;
+void GraphEdge::setMaxSpeed(double max_speed){
+    this->max_speed = max_speed;
 }

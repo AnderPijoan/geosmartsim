@@ -8,10 +8,9 @@
 
 #include "agents/Agent.h"
 
-#include "utils/httpserver/HttpServer.h"
-#include "utils/websocketserver/WebSocketServer.h"
+#include "utils/http_server/HttpServer.h"
+#include "utils/websocket_server/WebSocketServer.h"
 
-// For the whole environment
 #include "environment/time/Time.h"
 #include "environment/time/Scheduler.h"
 
@@ -27,14 +26,20 @@ QT_FORWARD_DECLARE_CLASS(Scheduler)
 class Environment : public PhysicalEnvironment, public CommunicationEnvironment
 {
 public:
-    static Environment *getInstance();
+    static Environment* getInstance();
 
     // SETTERS
     void setMaxParallelAgents(unsigned int number);
     void createHttpServer(unsigned int port);
     void createWebSocketServer(unsigned int port);
     void setEnvironmentTime(QDateTime environmentTime, double time_speed);
+    void updateAgentGeometry(Agent* agent, Geometry* old_geom, Geometry* new_geom); // Update agent geometry
     Scheduler* createScheduler(int seconds);
+
+    // GETTERS
+    Agent* getAgent(QString class_name, unsigned int id); // Get one agent
+    Agent* getAgent(unsigned int id); // Get one agent
+    QList<Agent*> getAgents(QString class_name); // Get only one class type agents
 
     // ENVIRONMENT METHODS
     bool containsAgent(Agent* agent);
@@ -42,12 +47,9 @@ public:
     bool addAgents(QList<Agent*> agents);
     bool deleteAgent(Agent* agent);
     bool deleteAgent(unsigned int id);
-    bool runAllAgents(QString class_name); // Run all
-    Agent* runAgent(Agent* agent);
-    Agent* stopAgent(Agent* agent);
-    Agent* getAgent(QString class_name, unsigned int id); // Get one agent
-    QList<Agent*> getAgents(QString class_name); // Get only one class type agents
-    QList<Agent*> getAgents(); // Returns all agents
+    bool runAgents(QString class_name); // Run all
+    Agent* runAgent(Agent* agent); // Run one
+    Agent* stopAgent(Agent* agent); // Stop one
 
 private:
     Environment();
@@ -58,7 +60,7 @@ private:
     Time * environment_date_time;
 
     // QHASH<ClassName, QHASH< ID , AGENT>>
-    QHash<QString, QHash<unsigned int, Agent*> > agents;
+    QHash<QString, QHash<unsigned int, Agent*> > environment_agents;
     // Mutex
     QMutex mutex;
 };

@@ -28,8 +28,7 @@ public slots:
 
 private:
     QByteArray waitForResponse();
-
-    QNetworkAccessManager network_manager;
+    QNetworkAccessManager* network_manager;
     QByteArray response_data;
     QNetworkReply::NetworkError response_error;
 };

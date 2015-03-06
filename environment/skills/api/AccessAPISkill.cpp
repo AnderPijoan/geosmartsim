@@ -1,13 +1,15 @@
 #include <QNetworkRequest>
 #include <QNetworkReply>
 #include <QHttpMultiPart>
+#include <environment/Environment.h>
 
 #include <QThread>
 
 #include "AccessAPISkill.h"
 
-AccessAPISkill::AccessAPISkill(Agent* agent) : Skill(agent){
-    QObject::connect(&network_manager, SIGNAL(finished(QNetworkReply*)),
+AccessAPISkill::AccessAPISkill(Agent* agent) : Skill(agent){    
+    this->network_manager = new QNetworkAccessManager(this);
+    QObject::connect(network_manager, SIGNAL(finished(QNetworkReply*)),
                          dynamic_cast<AccessAPISkill*>(this), SLOT(parseNetworkResponse(QNetworkReply*)));
 }
 
@@ -20,7 +22,7 @@ QByteArray AccessAPISkill::getRequest(QUrl url, bool async)
     this->response_data = 0;
     this->response_error = QNetworkReply::NoError ;
     QNetworkRequest req(url);
-    network_manager.get(req);
+    this->network_manager->get(req);
     if (!async){
         return waitForResponse();
     }
@@ -33,7 +35,7 @@ QByteArray AccessAPISkill::postRequest(QUrl url, bool async)
     this->response_error = QNetworkReply::NoError ;
     QNetworkRequest req(url);
     QHttpMultiPart* body = new QHttpMultiPart();
-    network_manager.post(req, body);
+    this->network_manager->post(req, body);
     delete body;
     if (!async){
         return waitForResponse();
@@ -45,7 +47,7 @@ QByteArray AccessAPISkill::putRequest(QUrl url, bool async)
 {
     QNetworkRequest req(url);
     QHttpMultiPart* body = new QHttpMultiPart();
-    network_manager.put(req, body);
+    this->network_manager->put(req, body);
     delete body;
     if (!async){
         return waitForResponse();
@@ -58,7 +60,7 @@ QByteArray AccessAPISkill::deleteRequest(QUrl url, bool async)
     this->response_data = 0;
     this->response_error = QNetworkReply::NoError ;
     QNetworkRequest req(url);
-    network_manager.deleteResource(req);
+    this->network_manager->deleteResource(req);
     if (!async){
         return waitForResponse();
     }

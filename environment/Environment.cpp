@@ -1,4 +1,4 @@
-#include "Environment.h"
+﻿#include "Environment.h"
 #include <QMutexLocker>
 
 /**
@@ -12,7 +12,6 @@ Environment* Environment::getInstance(){
 
 /**
  * @brief Environment::Environment
- * @param parent
  */
 Environment::Environment() : PhysicalEnvironment()
 {
@@ -61,7 +60,7 @@ void Environment::setMaxParallelAgents(unsigned int number){
  /* RUN - STOP
 **********************************************************************/
 
-bool Environment::runAllAgents(QString class_name){
+bool Environment::runAgents(QString class_name){
     QList<Agent*> agents = this->getAgents(class_name);
     bool run = !agents.isEmpty();
     while(!agents.isEmpty()){
@@ -99,48 +98,79 @@ bool Environment::addAgents(QList<Agent*> agents){
 bool Environment::addAgent(Agent *agent){
     QMutexLocker locker(&mutex);
     // If it is the first agent of this class we receive, create the class in the hashmap
-    if(!agents.keys().contains(agent->getClass())){
+    if( !this->environment_agents.keys().contains(agent->getClass()) ){
         // Create HTTP URLS for these agent type
         QStringList httpOperations;
         httpOperations << "GETALL" << "GETONE" << "RUNALL" << "RUNONE" << "STOP";
-        this->http_server->createUrls(agent->getClass().toLower(), httpOperations);
-        // Insert agent in hashmap
+        this->http_server->createUrls(agent->getClass(), httpOperations);
+        // Insert new map with the agents class
         QHash<unsigned int, Agent*> map;
-        agents.insert(agent->getClass(), map);
+        // Insert new quadtree with the agents class
+        Quadtree* index = new Quadtree();
+        this->environment_agents.insert(agent->getClass(), map);
+        this->spatial_index.insert(agent->getClass() , index);
     }
 
-    // Add to agent map
-    agents[agent->getClass()].insert(agent->getId(), agent);
-    // Connect with websocket
+    // Add to agent map and spatial index
+    this->environment_agents[agent->getClass()].insert(agent->getId(), agent);
+    if( agent->getGeometry() && agent->getGeometry()->getEnvelopeInternal() ){
+        this->spatial_index.value(agent->getClass())->insert(agent->getGeometry()->getEnvelopeInternal(), agent);
+    }
+    // Connect with UI
     CommunicationEnvironment::connect( agent , SIGNAL( updateUI(QByteArray) ) , this->websocket_server , SLOT( updateUI(QByteArray)));
-
-    // Configure signal to enable communication between agents and environment
-    //QObject::connect(agent, SIGNAL(sendMessageToEnvironment(Message*)), this, SLOT(receiveMessageFromAgent(Message*)));
-
-    // Configure signal to enable communication between environment and agents
-    //QObject::connect(this, SIGNAL(sendNotificationToAgent(Message*)), entity, SLOT(receiveNotificationFromEnvironment(Message*)));
     return true;
 }
 
 bool Environment::deleteAgent(unsigned int id){
     QMutexLocker locker(&mutex);
-    bool found = false;
-    for(int i = 0; i < agents.keys().size() && !found; i++ ){
-         found = agents[ agents.keys().at(i) ].remove( id ) > 0;
+    Agent* remove_agent = this->getAgent(id);
+    if (remove_agent){
+        this->environment_agents[remove_agent->getClass()].remove( remove_agent->getId() );
+        if( remove_agent->getGeometry() && remove_agent->getGeometry()->getEnvelopeInternal() ){
+        this->spatial_index.value(remove_agent->getClass())->remove(remove_agent->getGeometry()->getEnvelopeInternal() , remove_agent);
+        }
+        return true;
     }
-    return found;
+    return false;
 }
 
 /* UPDATE
 **********************************************************************/
 
+void Environment::updateAgentGeometry(Agent* agent, Geometry* old_geom, Geometry* new_geom){
+    QMutexLocker locker(&mutex);
+    // If it does not belong to the environment, do not update in the spatial index
+    if ( this->containsAgent(agent) ){
+        // Old_geom might be null if the agent did not have any geometry when initialized
+        if( old_geom && old_geom->getEnvelopeInternal() ){
+            this->spatial_index.value(agent->getClass())->remove(old_geom->getEnvelopeInternal() , agent);
+        }
+        if ( new_geom && new_geom->getEnvelopeInternal() ){
+            this->spatial_index[agent->getClass()]->insert(new_geom->getEnvelopeInternal() , agent);
+        }
+    }
+}
+
 bool Environment::containsAgent(Agent* agent){
-    return this->agents[ agent->getClass() ].value( agent->getId() );
+    if ( !this->environment_agents.keys().contains(agent->getClass()) ){
+        return false;
+    }
+    return this->environment_agents[ agent->getClass() ].contains( agent->getId() );
 }
 
 Agent* Environment::getAgent(QString class_name, unsigned int id){
-    if (agents.contains(class_name) && agents[class_name].value(id) != 0){
-         return this->agents.value(class_name).value(id);
+    if (environment_agents.contains(class_name) && environment_agents[class_name].value(id) != 0){
+         return this->environment_agents.value(class_name).value(id);
+    }
+    return 0;
+}
+
+Agent* Environment::getAgent(unsigned int id){
+    foreach(QString class_name, this->environment_agents.keys()){
+        Agent* agent = this->getAgent(class_name , id);
+        if (agent){
+            return agent;
+        }
     }
     return 0;
 }
@@ -148,26 +178,11 @@ Agent* Environment::getAgent(QString class_name, unsigned int id){
 QList<Agent*> Environment::getAgents(QString class_name){
     QMutexLocker locker(&mutex);
     QList<Agent*> agents_list;
-    QHashIterator<unsigned int, Agent*> i(agents[class_name]);
+    QHashIterator<unsigned int, Agent*> i(environment_agents[class_name]);
     while(i.hasNext()){
         Agent* agent = i.next().value();
         if (agent != 0)
             agents_list.append(agent);
-    }
-    return agents_list;
-}
-
-QList<Agent*> Environment::getAgents(){
-    QList<Agent*> agents_list;
-    QHashIterator<QString, QHash<unsigned int, Agent*> > i(this->agents);
-    while(i.hasNext()){
-        QHashIterator<unsigned int, Agent*> j(i.next().value());
-        while(j.hasNext()){
-            Agent* agent = j.next().value();
-            if (agent != 0){
-                agents_list.append(agent);
-            }
-        }
     }
     return agents_list;
 }

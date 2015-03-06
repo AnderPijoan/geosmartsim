@@ -1,7 +1,6 @@
 #include <QDebug>
 
 #include "environment/Environment.h"
-#include "environment/physical_environment/managers/graphs/GraphNetworksManager.h"
 #include "PgRoutingBaseSkill.h"
 
 PgRoutingBaseSkill::PgRoutingBaseSkill( Agent* agent , QVector<PgRoutingConstants::road_types> roads_to_use , double reverse_factor ) : AccessDBSkill(agent){
@@ -132,19 +131,18 @@ void PgRoutingBaseSkill::createTempRoutingTables(){
                                                         QString(" class_ids && ARRAY[ %1 ]").arg(roadIdsAsString) ); // && = overlap/have elements in common operand
 }
 
-Road* PgRoutingBaseSkill::createOrReuseRoadForGeom(LineString *line, PgRoutingConstants::road_types type){
-    GraphEdge* edge = GraphNetworksManager::getEdge(line); // See if edge already exists
+Road* PgRoutingBaseSkill::createOrReuseRoadForGeom(LineString* line, PgRoutingConstants::road_types type){
+    /*Edge* edge = GraphNetworkManager::getEdge( "Road" , line );
     Road* road = 0;
     // If there is no edge
     if( !edge ){
-        edge = GraphNetworksManager::createEdge(line);
-        road = new Road( *edge , type );
-        GraphNetworksManager::insertEdge(road , true); // Insert the road class
-        edge->deleteLater();
+        road = new Road(line, type);
+        GraphNetworkManager::addEdge( road );
     } else {
         // Else we have received a road
         road = dynamic_cast<Road*> (edge);
         delete line;
     }
-    return road;
+    return road;*/
+    return 0;
 }

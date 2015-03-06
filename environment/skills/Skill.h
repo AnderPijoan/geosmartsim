@@ -3,7 +3,6 @@
 
 #include <QMap>
 
-#include "utils/drivers/PostgresDriver.h"
 #include "agents/Agent.h"
 
 using namespace geos::geom;

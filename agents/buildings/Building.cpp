@@ -1,7 +1,7 @@
 #include "Building.h"
 #include "environment/Environment.h"
 
-Building::Building(int levels) : Agent(){
+Building::Building(int levels,  QString class_name) : Agent(class_name){
     this->levels = levels;
     this->inhabitants_contain_skill = new AgentContainSkill(this);
     this->routing_skill = 0;

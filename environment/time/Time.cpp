@@ -13,8 +13,7 @@ Time* Time::getInstance(){
     return &instance;
 }
 
-Time::Time()
-{
+Time::Time(){
 }
 
 void Time::initTime(QDateTime environmentTime, double timeSpeed){
@@ -24,12 +23,9 @@ void Time::initTime(QDateTime environmentTime, double timeSpeed){
     Time::internal_start_time = QDateTime::currentDateTime();
 }
 
-QByteArray Time::toJSON(){
-    QVariantMap jsonMessage;
-    jsonMessage.insert("time",Time::getTime().toMSecsSinceEpoch());
-
-    return QJsonDocument::fromVariant(jsonMessage).toJson();
-}
+/**********************************************************************
+   GETTERS
+**********************************************************************/
 
 double Time::msecondsToEnvironmentMseconds(double mseconds){
     if(Time::time_speed == 0){
@@ -47,8 +43,14 @@ double Time::secondsToEnvironmentMseconds(double seconds){
     return (seconds / time_speed) * 1000;
 }
 
-QDateTime Time::getTime(){
+QDateTime Time::getCurrentDateTime(){
     quint64 spent_mseconds = Time::internal_start_time.msecsTo(QDateTime::currentDateTime());
     QDateTime calculated_time = Time::environment_time.addMSecs(spent_mseconds * Time::time_speed);
     return calculated_time;
+}
+
+QVariantMap Time::getCurrentDateTimeAsJSON(){
+    QVariantMap jsonMessage;
+    jsonMessage.insert("time",Time::getCurrentDateTime().toMSecsSinceEpoch());
+    return jsonMessage;
 }

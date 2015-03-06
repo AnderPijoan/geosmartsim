@@ -1,31 +1,109 @@
 #include <QCoreApplication>
 #include <QDebug>
-#include <QDateTime>
+#include <geos/geom/LineString.h>
 
 #include "environment/Environment.h"
+#include "usecases/home_to_work_people/HomeToWork.h"
+#include "environment/skills/graph/DijkstraSkill.h"
+#include "utils/db/PostgresDriver.h"
+
+#include "agents/graphs/roads/Road.h"
 
 using namespace geos;
 
-int main(int argc, char *argv[]){
-    QCoreApplication app(argc, argv);
+int main(int argc, char *argv[])
+{
+    Q_UNUSED(argc);
+    Q_UNUSED(argv);
 
-    // INIT DB
-    PostgresDriver::initDB("****", "****", "****", "****", 20);
+    QCoreApplication app(argc, argv);
 
     // CREATE ENVIRONMENT
     Environment * environment = Environment::getInstance();
     environment->setBounds(
-                QString("\
-                POLYGON((-2.9632186889648438 43.28472849204868,-2.9572105407714844 43.28210423663192,-2.9481124877929688 43.27922992224204,-2.9378128051757812 43.27548061244783,-2.927684783935547 43.27485570502189,-2.9179000854492188 43.27023119062441,-2.9058837890625 43.26498131600872,-2.8967857360839844 43.26260622398263,-2.8887176513671875 43.25848084391599,-2.889232635498047 43.254480208420766,-2.8952407836914062 43.25373006000424,-2.8998756408691406 43.25022924521626,-2.901935577392578 43.2472283866619,-2.9077720642089844 43.24510268906883,-2.914295196533203 43.24460251414909,-2.9203033447265625 43.242726821624444,-2.9287147521972656 43.243352058882756,-2.940387725830078 43.24297691729779,-2.951030731201172 43.24472755826403,-2.962017059326172 43.24935401007663,-2.966480255126953 43.25385508538202,-2.9673385620117188 43.26135613832911,-2.9693984985351562 43.265356322068655,-2.975921630859375 43.26860627781872,-2.9764366149902344 43.27360587091847,-2.9754066467285156 43.277855202141474,-2.971973419189453 43.28247913719357,-2.9632186889648438 43.28472849204868)) \
-                 "));
-                environment->setMaxParallelAgents( 100 );
-                environment->setEnvironmentTime( QDateTime::currentDateTime(), 1 );
+                environment->getGeometryFromWKT(
+                    QString("\
+                            POLYGON((-2.966437339782715 43.39470154352386,-2.966437339782715 43.37212017346092,-2.996220588684082 43.37212017346092,-2.996220588684082 43.39470154352386,-2.966437339782715 43.39470154352386)) \
+                            ") ) );
+                            environment->setMaxParallelAgents( 1000 );
+                    environment->setEnvironmentTime( QDateTime::currentDateTime(), 1 );
 
-    // CREATE HTTP AND SOCKET SERVER FOR FRONTEND
-    environment->createHttpServer( 3000 );
-    environment->createWebSocketServer( 3001 );
-    
-    // INSERT MAGIC HERE
+
+                // CREATE HTTP AND SOCKET SERVER FOR FRONTEND
+                environment->createHttpServer( 3000 );
+            environment->createWebSocketServer( 3001 );
+
+    // TEST GRAPH EXAMPLE
+
+    PostgresDriver::initDB("energia.deusto.es", 5432, "bizkaia", "gisuser", "gisuser");
+    PostgresDriver* driver = new PostgresDriver("main-connection");
+    driver->connectDB();
+
+    QList<GraphEdge*> roads;
+
+    QListIterator<QSqlRecord> i(
+                driver->executeCustomQuery(
+                    QString("SELECT \
+                                ST_ASTEXT(the_geom) AS the_geom, to_cost AS cost, one_way AS one_way \
+                                FROM geosmartsim_roads \
+                                WHERE ST_INTERSECTS( the_geom , ST_GEOMFROMTEXT( '%1' , 4326) ) AND \
+                                class_id < 200")
+                    .arg( QString::fromStdString(environment->getBounds()->toString()) )));
+    while( i.hasNext() ){
+        QSqlRecord record = i.next();
+
+        try{
+            LineString* line = dynamic_cast<LineString*>(environment->getGeometryFromWKT( record.value("the_geom").toString() ) );
+                for(int p = 0; p < line->getNumPoints()-1; p++){
+
+                    double cost = record.value( cost ).toDouble();
+                    GraphNode* start = new GraphNode();
+                    start->setGeometry( line->getPointN( p ) );
+
+                    GraphNode* end = new GraphNode();
+                    end->setGeometry( line->getPointN( p+1 ) );
+
+                    // One direction
+
+                    Road* road = new Road(RoadConstants::h_unclassified , start , end);
+                    road->setGeometry(
+                                environment->getGeometryFromWKT(
+                                    QString("LINESTRING(%1 %2, %3 %4)")
+                                    .arg( line->getPointN( p )->getX() )
+                                    .arg( line->getPointN( p )->getY() )
+                                    .arg( line->getPointN( p+1 )->getX() )
+                                    .arg( line->getPointN( p+1 )->getY() )
+                                    ) );
+                    road->setWeight( line->getLength() );
+                    environment->addAgent(road);
+                    roads.append( road );
+                    if ( !record.value("one_way").toBool() ){
+                        // Reverse direction
+                        road = new Road(RoadConstants::h_unclassified , end , start);
+                        road->setGeometry(
+                                    environment->getGeometryFromWKT(
+                                                QString("LINESTRING(%1 %2, %3 %4)")
+                                                .arg( line->getPointN( p+1 )->getX() )
+                                                .arg( line->getPointN( p+1 )->getY() )
+                                                .arg( line->getPointN( p )->getX() )
+                                                .arg( line->getPointN( p )->getY() )
+                                                ) );
+                        road->setWeight( line->getLength() );
+                        environment->addAgent(road);
+                        roads.append( road );
+                    }
+            }
+        } catch(...){}
+    }
+
+    int amount = 400;
+    for(int i = 0; i < amount; i++){
+        HomeToWork* hometowork = new HomeToWork(VehicleConstants::car);
+        hometowork->setStartingPoint( environment->getRandomPoint( qrand() ) );
+        hometowork->setRoads( roads );
+        hometowork->setMaxSpeed( hometowork->getId() % 10 );
+        environment->addAgent( hometowork );
+    }
 
     qDebug() << "GEOSMARTSIM ready" << endl;
 

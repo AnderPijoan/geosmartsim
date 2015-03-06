@@ -16,7 +16,7 @@ class PostgresDriver : public QObject
 {
     Q_OBJECT
 public:
-    static void initDB(QString db_url, QString db_name, QString db_user, QString db_pass, int max_queries = 20);
+    static void initDB(QString db_url, int db_port, QString db_name, QString db_user, QString db_pass, int max_queries = 20);
     PostgresDriver(QString connectionName = "");
     ~PostgresDriver();
     bool connectDB();
@@ -35,6 +35,7 @@ private:
 
     // Statics
     static QString db_url;
+    static int db_port;
     static QString db_name;
     static QString db_user;
     static QString db_pass;

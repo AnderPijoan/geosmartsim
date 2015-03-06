@@ -39,7 +39,7 @@ void WebSocketServer::socketDisconnected(){
     }
 }
 
-void WebSocketServer::broadcastSocketMessage(QByteArray message){
+void WebSocketServer::updateUI(QByteArray message){
     // Send to all connected clients
     QListIterator<QWebSocket*> i(connected_clients);
     while (i.hasNext()){

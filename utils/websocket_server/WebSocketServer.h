@@ -17,7 +17,7 @@ public:
     ~WebSocketServer();
 
 private slots:
-    void broadcastSocketMessage(QByteArray message); // Only environment can connect entities to websockets
+    void updateUI(QByteArray message); // Only environment can connect entities to websockets
     void onNewConnection();
     void socketDisconnected();
 

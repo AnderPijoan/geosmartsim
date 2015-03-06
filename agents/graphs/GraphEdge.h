@@ -2,42 +2,41 @@
 #define GRAPHEDGE_H
 
 #include <QObject>
+
+#include "geos/geom/Point.h"
 #include "geos/geom/LineString.h"
+#include <lemon/core.h>
+#include <lemon/list_graph.h>
 
 #include "agents/Agent.h"
-#include "environment/physical_environment/managers/graphs/GraphNetworksManager.h"
+#include "agents/graphs/GraphNode.h"
+
+using namespace lemon;
 
 class GraphEdge : public Agent
 {
     Q_OBJECT
-    friend class GraphNetworksManager;
 public:
-    GraphEdge(GraphEdge &edge); // Used for child elements
-    ~GraphEdge();
-
-    // SETTERS
-    void setMaxSpeed(double speed);
-    void setLength(double length);
+     GraphEdge(GraphNode* start_node, GraphNode* end_node, QString class_name = "GraphEdge");
+     ~GraphEdge();
 
     // GETTERS
+    double getWeight();
     double getMaxSpeed();
-    double getLength();
+    GraphNode* getStartNode();
+    GraphNode* getEndNode();
+    double getsecondsToGoThrough(double speed); // Speed in meters/seconds
 
-    // ENTITY METHODS
-    Point* nextPoint();
-    Point* previousPoint();
-    QVector<Point*> getPoints();
-    Point* currentPoint();
-    void goToBeginning();
-    double secondsToGoThrough(double element_max_speed); // In m/s
+    // SETTERS
+    void setGeometry(Geometry* geom);
+    void setWeight(double weight);
+     void setMaxSpeed(double max_speed);
 
 private:
-    GraphEdge(LineString* geometry); // Only manager can create
-
-    double edge_max_speed; // m/s
-    double edge_length; // m
-
-    int point_iterator_position;
+    GraphNode* start_node;
+    GraphNode* end_node;
+    double weight; // For path finding
+    double max_speed; // In meter/second
 };
 
 #endif // GRAPHEDGE_H

@@ -4,20 +4,21 @@
 #include <QSqlRecord>
 #include <QSqlError>
 #include <QDateTime>
-#include <geos/io/WKTReader.h>
 #include <environment/Environment.h>
 
 #include "PostgresDriver.h"
 
 QString PostgresDriver::db_url;
+int PostgresDriver::db_port = 5432;
 QString PostgresDriver::db_name;
 QString PostgresDriver::db_user;
 QString PostgresDriver::db_pass;
 int PostgresDriver::db_max_queries;
 int PostgresDriver::db_executing_queries_count;
 
-void PostgresDriver::initDB(QString dbURL, QString dbName, QString dbUser, QString dbPass, int max_queries){
+void PostgresDriver::initDB(QString dbURL, int dbPort, QString dbName, QString dbUser, QString dbPass, int max_queries){
     PostgresDriver::db_url = dbURL;
+    PostgresDriver::db_port = dbPort;
     PostgresDriver::db_name = dbName;
     PostgresDriver::db_user = dbUser;
     PostgresDriver::db_pass = dbPass;
@@ -58,21 +59,22 @@ bool PostgresDriver::connectDB(){
 
     this->database = QSqlDatabase::addDatabase("QPSQL" , this->connection_name);
     this->database.setHostName(PostgresDriver::db_url);
+    this->database.setPort( PostgresDriver::db_port );
     this->database.setDatabaseName(PostgresDriver::db_name);
     this->database.setUserName(PostgresDriver::db_user);
     this->database.setPassword(PostgresDriver::db_pass);
-    if(this->database.open()){
-        this->driver_connection_count++;
-        //qDebug() << "Connected to DB : " << this->database.hostName() << this->database.port() << this->database.databaseName() << this->hash << endl;
-        return true;
-    } else {
-        qWarning() << "Unable to connect to DB : " << this->database.hostName() << this->database.port() << this->database.databaseName() << endl;
-    }
-    return false;
+    int wait = 2;
+    while( !this->database.open() ){
+        this->thread()->wait( wait * 1000 ); // Wait 2 seconds
+        qWarning() << "Unable to connect to DB : " << this->database.hostName() << this->database.port() << this->database.databaseName() << " waiting..." << endl;
+
+     }
+   return true;
 }
 
 void PostgresDriver::disconnectDB(){
-    this->driver_connection_count = qMax(--this->driver_connection_count , 0);
+    this->driver_connection_count--;
+    this->driver_connection_count = qMax(this->driver_connection_count , 0);
     if(this->database.isOpen() && this->driver_connection_count <= 0){
         //qDebug() << "Disconnected from DB : " << database.hostName() << database.port() << database.databaseName() << this->hash << endl;
         this->database.close();
@@ -109,7 +111,8 @@ void PostgresDriver::createEnvironmentBoundsTempTable(QString real_name, QString
             .arg(real_name)
             .arg(geometry_column)
             .arg( extra_where.length() ? " AND " + extra_where : extra_where );
-    this->executeCustomQuery(sql);
+
+        this->executeCustomQuery(sql);
 
     // Change geometry column name to THE_GEOM
    if( geometry_column != "the_geom" ){
@@ -138,7 +141,7 @@ QList<QSqlRecord> PostgresDriver::executeCustomQuery(QString sql){
         }
         //qDebug() << "Query returned" << list.size() << "records." << endl;
     } else {
-        qWarning() << "Could not execute query because database is closed." << endl;
+        qWarning() << "Could not execute query because database is closed. Have tried calling connectDB() method?" << endl;
     }
     PostgresDriver::db_executing_queries_count--;
     return list;

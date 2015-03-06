@@ -23,6 +23,7 @@ UrlMatch::~UrlMatch(){
 QRegularExpressionMatch UrlMatch::match(QUrl url)
 {
     QRegularExpressionMatch match = url_regex.match(url.path());
+
     return match;
 }
 

@@ -1,12 +1,10 @@
 #include "Vehicle.h"
 
-Vehicle::Vehicle(VehicleConstants::vehicle_types type) : Agent(){
+Vehicle::Vehicle(VehicleConstants::vehicle_types type, QString class_name) : Agent(class_name){
     this->vehicle_type = type;
-    this->max_speed = 0;
+    this->max_speed = 2.7; // ~10km/h
     this->starting_point = 0;
     this->ending_point = 0;
-    this->pgrouting_atob_skill = 0;
-    this->route = 0;
 }
 
 Vehicle::~Vehicle(){
@@ -15,12 +13,6 @@ Vehicle::~Vehicle(){
     }
     if (this->ending_point){
         delete this->ending_point;
-    }
-    if (this->pgrouting_atob_skill){
-        delete this->pgrouting_atob_skill;
-    }
-    if(this->route){
-        delete this->route;
     }
 }
 

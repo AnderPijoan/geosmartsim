@@ -3,12 +3,13 @@
 
 #include <QObject>
 
-#include <utils/drivers/PostgresDriver.h>
 #include <geos/geom/GeometryFactory.h>
+#include <geos/index/quadtree/Quadtree.h>
 #include <geos/geom/Polygon.h>
 #include <agents/Agent.h>
 
 using namespace geos::geom;
+using namespace geos::index::quadtree;
 
 class PhysicalEnvironment : public QObject
 {
@@ -20,22 +21,18 @@ public:
     Geometry* getGeometryFromWKT(QString wkt);
     QString getWKTFromGeometry(Geometry* geometry);
     GeometryFactory* getGeometryFactory();
+    QList<Agent*> getAgentsByGeometry(Geometry* geometry, QString class_name);
 
     // SETTERS
-    void setBounds(QString wkt);
     void setBounds(Geometry* geometry);
 
-signals:
-
-public slots:
-
 protected:
-
     explicit PhysicalEnvironment(QObject *parent = 0);
     ~PhysicalEnvironment();
 
     GeometryFactory* geometry_factory; // Geometry factory
     Geometry* bounds; // Environment bounds
+    QHash<QString, Quadtree*> spatial_index; // Spatial index
 
 private:
     // Mutex
