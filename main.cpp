@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 
     // TEST GRAPH EXAMPLE
 
-    PostgresDriver::initDB("energia.deusto.es", 5432, "bizkaia", "gisuser", "gisuser");
+    PostgresDriver::initDB("URL", 5432, "db", "user", "pass");
     PostgresDriver* driver = new PostgresDriver("main-connection");
     driver->connectDB();
 
