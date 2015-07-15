@@ -12,7 +12,7 @@ The platform consists of three main pieces:
 
 Autonomous Agents constitute the traditional agents in a MAS. They are scheduled to follow a certain behaviour for long periods of time and can interact with other elements or the Environment. When emulating a behaviour, this will be executed in a separate thread using QT's Signal/Slot system to maximize parallelism.
 
-** On the other hand, Passive Entities are those entities who, although having some logic inside, just react to external stimuli. Namely, Passive Entities provide or receive information from agents or the environment and execute simple behaviours as reaction to those actions. 
+On the other hand, Passive Entities are those entities who, although having some logic inside, just react to external stimuli. Namely, Passive Entities provide or receive information from agents or the environment and execute simple behaviours as reaction to those actions. 
 
 * Environment (which is also an intelligent agent)
 
